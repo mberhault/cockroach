@@ -141,5 +141,8 @@ DROP USER user2
 
 user root
 
-statement error pq: cannot drop users root: grants still exist on .*
+statement error pq: cannot drop user root: grants still exist on .*
 DROP USER root
+
+statement error pq: cannot drop user admin: grants still exist on .*
+DROP USER admin
