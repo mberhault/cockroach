@@ -50,7 +50,8 @@ rocksdb::Status CTRCipherStreamCreator::InitSettingsAndCreateCipherStream(
     return rocksdb::Status::InvalidArgument("failed to serialize encryption settings");
   }
 
-  result->reset(new CTRCipherStream(std::move(key), enc_settings.nonce(), enc_settings.counter()));
+  result->reset(new CTRCipherStream(&cipher_cache_, std::move(key), enc_settings.nonce(),
+                                    enc_settings.counter()));
   return rocksdb::Status::OK();
 }
 
@@ -75,15 +76,17 @@ rocksdb::Status CTRCipherStreamCreator::CreateCipherStreamFromSettings(
         "key_manager does not have a key with ID %s", enc_settings.key_id().c_str()));
   }
 
-  result->reset(new CTRCipherStream(std::move(key), enc_settings.nonce(), enc_settings.counter()));
+  result->reset(new CTRCipherStream(&cipher_cache_, std::move(key), enc_settings.nonce(),
+                                    enc_settings.counter()));
   return rocksdb::Status::OK();
 }
 
 enginepb::EnvType CTRCipherStreamCreator::GetEnvType() { return env_type_; }
 
-CTRCipherStream::CTRCipherStream(std::unique_ptr<enginepbccl::SecretKey> key,
+CTRCipherStream::CTRCipherStream(CipherCache* cipher_cache,
+                                 std::unique_ptr<enginepbccl::SecretKey> key,
                                  const std::string& nonce, uint32_t counter)
-    : key_(std::move(key)), nonce_(nonce), counter_(counter) {}
+    : cipher_cache_(cipher_cache), key_(std::move(key)), nonce_(nonce), counter_(counter) {}
 
 CTRCipherStream::~CTRCipherStream() {}
 
@@ -97,7 +100,7 @@ CTRCipherStream::InitCipher(std::unique_ptr<rocksdb_utils::BlockCipher>* cipher)
         fmt::StringPrintf("unknown encryption type %d", key_->info().encryption_type()));
   }
 
-  cipher->reset(NewAESEncryptCipher(key_->key()));
+  cipher_cache_->GetCipher(key_.get(), cipher);
   return rocksdb::Status::OK();
 }
 

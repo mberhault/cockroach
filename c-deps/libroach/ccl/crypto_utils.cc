@@ -56,6 +56,6 @@ class AESEncryptCipher : public rocksdb_utils::BlockCipher {
   CryptoPP::AES::Encryption enc_;
 };
 
-rocksdb_utils::BlockCipher* NewAESEncryptCipher(const std::string& key) {
-  return new AESEncryptCipher(key);
+rocksdb_utils::BlockCipher* NewAESEncryptCipher(const enginepbccl::SecretKey* key) {
+  return new AESEncryptCipher(key->key());
 }

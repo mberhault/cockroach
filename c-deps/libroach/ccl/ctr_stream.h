@@ -10,6 +10,7 @@
 
 #include <string>
 #include "../rocksdbutils/env_encryption.h"
+#include "cipher_cache.h"
 #include "key_manager.h"
 
 namespace cockroach {
@@ -36,6 +37,7 @@ class CTRCipherStreamCreator final : public rocksdb_utils::CipherStreamCreator {
  private:
   std::unique_ptr<KeyManager> key_manager_;
   enginepb::EnvType env_type_;
+  CipherCache cipher_cache_;
 };
 
 class CTRCipherStream final : public rocksdb_utils::BlockAccessCipherStream {
@@ -44,8 +46,8 @@ class CTRCipherStream final : public rocksdb_utils::BlockAccessCipherStream {
   // - a block cipher (takes ownership)
   // - nonce of size 'cipher.BlockSize - sizeof(counter)' (eg: 16-4 = 12 bytes for AES)
   // - counter
-  CTRCipherStream(std::unique_ptr<enginepbccl::SecretKey> key, const std::string& nonce,
-                  uint32_t counter);
+  CTRCipherStream(CipherCache* cache, std::unique_ptr<enginepbccl::SecretKey> key,
+                  const std::string& nonce, uint32_t counter);
   virtual ~CTRCipherStream();
 
  protected:
@@ -65,6 +67,7 @@ class CTRCipherStream final : public rocksdb_utils::BlockAccessCipherStream {
                                        char* data, char* scratch) const override;
 
  private:
+  CipherCache* cipher_cache_;
   const std::unique_ptr<enginepbccl::SecretKey> key_;
   const std::string nonce_;
   const uint32_t counter_;

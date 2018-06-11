@@ -59,6 +59,7 @@ target_include_directories(roach
 )
 
 add_library(roachccl
+  ccl/cipher_cache.cc
   ccl/crypto_utils.cc
   ccl/ctr_stream.cc
   ccl/db.cc

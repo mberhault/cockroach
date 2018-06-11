@@ -10,6 +10,9 @@
 
 #include <string>
 #include "../rocksdbutils/env_encryption.h"
+#include "ccl/storageccl/engineccl/enginepbccl/key_registry.pb.h"
+
+namespace enginepbccl = cockroach::ccl::storageccl::engineccl::enginepbccl;
 
 /*
  * These provide various crypto primitives. They currently use CryptoPP.
@@ -25,4 +28,4 @@ std::string RandomBytes(size_t length);
 
 // Create a new AES cipher using the passed-in key.
 // Suitable for encryption only, Decrypt is not implemented.
-rocksdb_utils::BlockCipher* NewAESEncryptCipher(const std::string& key);
+rocksdb_utils::BlockCipher* NewAESEncryptCipher(const enginepbccl::SecretKey* key);
