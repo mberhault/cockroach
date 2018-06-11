@@ -18,8 +18,7 @@
 namespace enginepbccl = cockroach::ccl::storageccl::engineccl::enginepbccl;
 
 // CipherCache keeps a cache of initialized ciphers to avoid initialization costs.
-// TODO(mberhault): this hardcodes the use of AESEncryptCipher, we'll need to make it
-// configurable if we ever add other ciphers (or have encrypt/decrypt AES).
+// TODO(mberhault): some type of time-based expiration would be nice.
 class CipherCache {
  public:
   CipherCache();
@@ -33,12 +32,14 @@ class CipherCache {
   // The wrapper used to release the underlying Cipher upon destruction.
   class CipherWrapper;
 
+  typedef std::deque<rocksdb_utils::BlockCipher*> CipherQueue;
+  typedef std::unordered_map<std::string, CipherQueue*> IDMap;
+
   // Release is private as it is only meant to be called by the release-on-destruction
   // cipher wrapper.
   void Release(const std::string& key_id, rocksdb_utils::BlockCipher* cipher);
 
-  typedef std::deque<rocksdb_utils::BlockCipher*> CipherQueue;
-  typedef std::unordered_map<std::string, CipherQueue> IDMap;
+  CipherQueue* GetOrCreateDequeLocked(const std::string& id);
 
   std::mutex mu_;
   IDMap map_;
